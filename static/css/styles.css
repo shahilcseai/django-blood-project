@@ -1,0 +1,228 @@
+/* Main Styles for Blood Donation Management System */
+
+/* Custom Variables */
+:root {
+    --blood-red: #dc3545;
+    --blood-red-light: #e35d6a;
+    --blood-red-dark: #b02a37;
+}
+
+/* General Layout & Typography */
+body {
+    font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+    background-color: #f8f9fa;
+}
+
+.container {
+    max-width: 1200px;
+}
+
+/* Custom Card Styles */
+.card {
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    border-radius: 0.5rem 0.5rem 0 0;
+    font-weight: 500;
+}
+
+.card-footer {
+    border-radius: 0 0 0.5rem 0.5rem;
+}
+
+/* Profile Icon */
+.profile-icon {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+/* Feature Icons on Home Page */
+.feature-icon {
+    width: 70px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+}
+
+/* Blood Type Badge */
+.blood-badge {
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+}
+
+/* Custom Buttons */
+.btn-blood {
+    background-color: var(--blood-red);
+    border-color: var(--blood-red);
+    color: white;
+}
+
+.btn-blood:hover {
+    background-color: var(--blood-red-dark);
+    border-color: var(--blood-red-dark);
+    color: white;
+}
+
+/* Custom Alert Styles */
+.alert {
+    border-radius: 0.5rem;
+}
+
+/* Custom Table Styles */
+.table-hover tbody tr:hover {
+    background-color: rgba(220, 53, 69, 0.05);
+}
+
+/* Custom Borders */
+.border-left-danger {
+    border-left: 0.25rem solid var(--blood-red) !important;
+}
+
+.border-left-primary {
+    border-left: 0.25rem solid #0d6efd !important;
+}
+
+.border-left-success {
+    border-left: 0.25rem solid #198754 !important;
+}
+
+.border-left-warning {
+    border-left: 0.25rem solid #ffc107 !important;
+}
+
+/* Dashboard Stats */
+.card .h5 {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.card .text-xs {
+    font-size: 0.7rem;
+    letter-spacing: 0.1rem;
+}
+
+/* Nav Tabs */
+.nav-tabs .nav-link {
+    border: none;
+    color: #495057;
+    border-bottom: 3px solid transparent;
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--blood-red);
+    border-bottom: 3px solid var(--blood-red);
+    font-weight: 500;
+}
+
+.nav-tabs .nav-link:hover {
+    border-bottom: 3px solid #e9ecef;
+}
+
+/* Form Styling */
+.form-control:focus {
+    border-color: var(--blood-red-light);
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+}
+
+/* Donor/Requester Cards on Register Page */
+.register-card {
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.register-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Pagination */
+.page-item.active .page-link {
+    background-color: var(--blood-red);
+    border-color: var(--blood-red);
+}
+
+.page-link {
+    color: var(--blood-red);
+}
+
+.page-link:hover {
+    color: var(--blood-red-dark);
+}
+
+/* Footer */
+footer {
+    margin-top: 3rem;
+}
+
+footer a {
+    text-decoration: none;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
+/* Blood Drop SVG Animation */
+.blood-drop {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .profile-icon {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .display-4 {
+        font-size: 2rem;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+    }
+    
+    body {
+        font-size: 12pt;
+    }
+    
+    .container {
+        max-width: 100%;
+        width: 100%;
+    }
+}
