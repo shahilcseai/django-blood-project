@@ -1,0 +1,355 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if cancel_mode %}
+        Cancel Appointment - Blood Donation Management System
+    {% elif complete_mode %}
+        Complete Appointment - Blood Donation Management System
+    {% elif donation_mode %}
+        Record Donation - Blood Donation Management System
+    {% else %}
+        Schedule Appointment - Blood Donation Management System
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header {% if cancel_mode %}bg-warning{% elif complete_mode or donation_mode %}bg-success{% else %}bg-danger{% endif %} text-white">
+                <h4 class="mb-0">
+                    {% if cancel_mode %}
+                        <i class="fas fa-times-circle me-2"></i>Cancel Appointment
+                    {% elif complete_mode %}
+                        <i class="fas fa-check-circle me-2"></i>Complete Appointment & Record Donation
+                    {% elif donation_mode %}
+                        <i class="fas fa-tint me-2"></i>Record Donation
+                    {% else %}
+                        <i class="fas fa-calendar-alt me-2"></i>Schedule Blood Donation Appointment
+                    {% endif %}
+                </h4>
+            </div>
+            
+            <div class="card-body p-4">
+                {% if cancel_mode %}
+                    <!-- Cancel Appointment Form -->
+                    <div class="alert alert-warning">
+                        <h5><i class="fas fa-exclamation-triangle me-2"></i>Are you sure you want to cancel this appointment?</h5>
+                        <p class="mb-0">
+                            Appointment scheduled for: <strong>{{ appointment.appointment_date|date:"F d, Y, g:i A" }}</strong>
+                        </p>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'appointment_list' %}" class="btn btn-outline-secondary">Go Back</a>
+                            <button type="submit" class="btn btn-warning">Confirm Cancellation</button>
+                        </div>
+                    </form>
+                    
+                {% elif complete_mode %}
+                    <!-- Complete Appointment Form -->
+                    <div class="alert alert-info mb-4">
+                        <p class="mb-0">
+                            <strong>Donor:</strong> {{ appointment.donor.get_full_name }}
+                            ({{ appointment.donor.donor_profile.blood_group }})<br>
+                            <strong>Appointment Date:</strong> {{ appointment.appointment_date|date:"F d, Y, g:i A" }}<br>
+                            <strong>Notes:</strong> {{ appointment.notes|default:"None" }}
+                        </p>
+                    </div>
+                    
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.blood_group.id_for_label }}" class="form-label">Blood Group</label>
+                                {{ form.blood_group }}
+                                {% if form.blood_group.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.blood_group.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.units.id_for_label }}" class="form-label">Units Donated</label>
+                                {{ form.units }}
+                                {% if form.units.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.units.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Standard donation is 1 unit (450-500 ml)</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.donation_date.id_for_label }}" class="form-label">Donation Date</label>
+                                {{ form.donation_date }}
+                                {% if form.donation_date.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.donation_date.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.hemoglobin_level.id_for_label }}" class="form-label">Hemoglobin Level (g/dL)</label>
+                                {{ form.hemoglobin_level }}
+                                {% if form.hemoglobin_level.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.hemoglobin_level.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Normal range: 12.5-17.5 g/dL</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.pulse_rate.id_for_label }}" class="form-label">Pulse Rate (bpm)</label>
+                                {{ form.pulse_rate }}
+                                {% if form.pulse_rate.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.pulse_rate.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Normal range: 60-100 bpm</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.blood_pressure.id_for_label }}" class="form-label">Blood Pressure</label>
+                                {{ form.blood_pressure }}
+                                {% if form.blood_pressure.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.blood_pressure.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Format: systolic/diastolic (e.g., 120/80)</div>
+                            </div>
+                            
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.notes.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-success">Complete Appointment & Record Donation</button>
+                        </div>
+                    </form>
+                    
+                {% elif donation_mode %}
+                    <!-- Record Donation (without appointment) Form -->
+                    <div class="alert alert-info mb-4">
+                        <p class="mb-0">
+                            Record a blood donation without an appointment. Please select a donor first.
+                        </p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="donor_selector" class="form-label">Select Donor</label>
+                        <select id="donor_selector" class="form-control" required>
+                            <option value="">-- Select a donor --</option>
+                            {% for donor in donors %}
+                                <option value="{{ donor.id }}">
+                                    {{ donor.get_full_name|default:donor.username }} ({{ donor.donor_profile.blood_group }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="donor_id" id="donor_id" value="">
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.blood_group.id_for_label }}" class="form-label">Blood Group</label>
+                                {{ form.blood_group }}
+                                {% if form.blood_group.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.blood_group.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.units.id_for_label }}" class="form-label">Units Donated</label>
+                                {{ form.units }}
+                                {% if form.units.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.units.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Standard donation is 1 unit (450-500 ml)</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.donation_date.id_for_label }}" class="form-label">Donation Date</label>
+                                {{ form.donation_date }}
+                                {% if form.donation_date.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.donation_date.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.hemoglobin_level.id_for_label }}" class="form-label">Hemoglobin Level (g/dL)</label>
+                                {{ form.hemoglobin_level }}
+                                {% if form.hemoglobin_level.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.hemoglobin_level.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Normal range: 12.5-17.5 g/dL</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.pulse_rate.id_for_label }}" class="form-label">Pulse Rate (bpm)</label>
+                                {{ form.pulse_rate }}
+                                {% if form.pulse_rate.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.pulse_rate.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Normal range: 60-100 bpm</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.blood_pressure.id_for_label }}" class="form-label">Blood Pressure</label>
+                                {{ form.blood_pressure }}
+                                {% if form.blood_pressure.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.blood_pressure.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Format: systolic/diastolic (e.g., 120/80)</div>
+                            </div>
+                            
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.notes.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'donation_history' %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-success" id="submit-donation" disabled>Record Donation</button>
+                        </div>
+                    </form>
+                    
+                {% else %}
+                    <!-- New Appointment Form -->
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="alert alert-info mb-4">
+                            <h5><i class="fas fa-info-circle me-2"></i>Important Information</h5>
+                            <ul class="mb-0">
+                                <li>Please schedule your appointment at least 24 hours in advance.</li>
+                                <li>A blood donation typically takes about 30-45 minutes including registration and screening.</li>
+                                <li>Drink plenty of water and eat a healthy meal before your appointment.</li>
+                                <li>Get a good night's sleep before donating.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.appointment_date.id_for_label }}" class="form-label">Preferred Date and Time</label>
+                                {{ form.appointment_date }}
+                                {% if form.appointment_date.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.appointment_date.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Please select a date and time within the next 30 days.</div>
+                            </div>
+                            
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">Additional Notes</label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.notes.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'appointment_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-danger">Schedule Appointment</button>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if donation_mode %}
+<script>
+    // Handle donor selection for recording donations
+    document.addEventListener('DOMContentLoaded', function() {
+        const donorSelector = document.getElementById('donor_selector');
+        const donorIdInput = document.getElementById('donor_id');
+        const submitButton = document.getElementById('submit-donation');
+        
+        donorSelector.addEventListener('change', function() {
+            const selectedDonorId = this.value;
+            donorIdInput.value = selectedDonorId;
+            
+            if (selectedDonorId) {
+                submitButton.disabled = false;
+            } else {
+                submitButton.disabled = true;
+            }
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}

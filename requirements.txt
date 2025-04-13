@@ -1,0 +1,3 @@
+django
+requests
+xhtml2pdf

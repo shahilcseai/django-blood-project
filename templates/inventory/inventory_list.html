@@ -1,0 +1,342 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if log_view %}
+        Inventory Logs - Blood Donation Management System
+    {% else %}
+        Blood Inventory - Blood Donation Management System
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <ul class="nav nav-tabs mb-4">
+            <li class="nav-item">
+                <a class="nav-link {% if not log_view %}active{% endif %}" href="{% url 'inventory_list' %}">
+                    <i class="fas fa-box me-1"></i>Current Inventory
+                </a>
+            </li>
+            {% if user.is_staff %}
+                <li class="nav-item">
+                    <a class="nav-link {% if log_view %}active{% endif %}" href="{% url 'inventory_logs' %}">
+                        <i class="fas fa-history me-1"></i>Inventory Logs
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+        
+        {% if not log_view %}
+            <!-- Current Inventory View -->
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card shadow mb-4">
+                        <div class="card-header bg-danger text-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0"><i class="fas fa-tint me-2"></i>Blood Inventory Status</h5>
+                                <div>
+                                    {% if user.is_staff %}
+                                        <a href="{% url 'update_inventory' %}" class="btn btn-sm btn-light me-2">
+                                            <i class="fas fa-edit me-1"></i>Update Inventory
+                                        </a>
+                                    {% endif %}
+                                    <a href="{% url 'export_inventory' %}" class="btn btn-sm btn-light">
+                                        <i class="fas fa-file-export me-1"></i>Export
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Blood Group</th>
+                                            <th>Units Available</th>
+                                            <th>Status</th>
+                                            <th>Last Updated</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in inventory %}
+                                            <tr>
+                                                <td>
+                                                    <span class="badge bg-danger">{{ item.blood_group }}</span>
+                                                </td>
+                                                <td>{{ item.units_available }}</td>
+                                                <td>
+                                                    {% if item.is_low %}
+                                                        <span class="badge bg-warning text-dark">Low Stock</span>
+                                                    {% elif item.units_available == 0 %}
+                                                        <span class="badge bg-danger">Out of Stock</span>
+                                                    {% else %}
+                                                        <span class="badge bg-success">Available</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ item.last_updated|date:"M d, Y H:i" }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="table-light">
+                                            <th>Total</th>
+                                            <th>{{ total_units }}</th>
+                                            <th colspan="2"></th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <!-- Blood Inventory Chart -->
+                    <div class="card shadow mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Blood Groups Distribution</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="bloodInventoryChart" width="100%" height="250"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Low Stock Alert -->
+                    {% if low_inventory %}
+                        <div class="card shadow bg-light">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Low Stock Alert</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>The following blood types are running low:</p>
+                                <ul class="list-group">
+                                    {% for item in low_inventory %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>
+                                                <span class="badge bg-danger me-2">{{ item.blood_group }}</span>
+                                                {{ item.units_available }} units available
+                                            </span>
+                                            {% if user.is_staff %}
+                                                <a href="{% url 'update_inventory' %}?blood_group={{ item.blood_group }}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-plus-circle"></i>
+                                                </a>
+                                            {% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% if user.is_staff %}
+                                <div class="card-footer text-center">
+                                    <a href="{% url 'update_inventory' %}" class="btn btn-primary btn-sm">Update Inventory</a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+        {% else %}
+            <!-- Inventory Logs View -->
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-history me-2"></i>Inventory Change Logs</h5>
+                        <a href="{% url 'export_inventory' %}?type=logs" class="btn btn-sm btn-light">
+                            <i class="fas fa-file-export me-1"></i>Export Logs
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Filter Form -->
+                    <form method="get" action="{% url 'inventory_logs' %}" class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label for="blood_group" class="form-label">Blood Group</label>
+                            <select name="blood_group" id="blood_group" class="form-control">
+                                <option value="">All Blood Groups</option>
+                                {% for group in blood_groups %}
+                                    <option value="{{ group }}" {% if selected_blood_group == group %}selected{% endif %}>{{ group }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="action" class="form-label">Action</label>
+                            <select name="action" id="action" class="form-control">
+                                <option value="">All Actions</option>
+                                {% for action in actions %}
+                                    <option value="{{ action }}" {% if selected_action == action %}selected{% endif %}>{{ action|title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-filter me-1"></i>Apply Filters
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Logs Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Blood Group</th>
+                                    <th>Action</th>
+                                    <th>Units</th>
+                                    <th>Change</th>
+                                    <th>User</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in logs %}
+                                    <tr>
+                                        <td>{{ log.created_at|date:"M d, Y H:i" }}</td>
+                                        <td>
+                                            <span class="badge bg-danger">{{ log.blood_group }}</span>
+                                        </td>
+                                        <td>
+                                            {% if log.action == 'add' %}
+                                                <span class="badge bg-success">Added</span>
+                                            {% elif log.action == 'remove' %}
+                                                <span class="badge bg-warning text-dark">Removed</span>
+                                            {% elif log.action == 'adjust' %}
+                                                <span class="badge bg-primary">Adjusted</span>
+                                            {% elif log.action == 'expired' %}
+                                                <span class="badge bg-danger">Expired</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ log.units }}</td>
+                                        <td>
+                                            {{ log.old_value }} → {{ log.new_value }}
+                                            {% if log.new_value > log.old_value %}
+                                                <span class="text-success">(+{{ log.new_value|add:"-log.old_value" }})</span>
+                                            {% elif log.new_value < log.old_value %}
+                                                <span class="text-danger">(-{{ log.old_value|add:"-log.new_value" }})</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if log.user %}
+                                                {{ log.user.username }}
+                                            {% else %}
+                                                <span class="text-muted">System</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if log.notes %}
+                                                {{ log.notes|truncatechars:30 }}
+                                            {% else %}
+                                                <span class="text-muted">No notes</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="7" class="text-center">
+                                            No logs found matching your filters.
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if logs.has_other_pages %}
+                        <nav aria-label="Inventory logs pagination" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                {% if logs.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ logs.previous_page_number }}&blood_group={{ selected_blood_group|default:'' }}&action={{ selected_action|default:'' }}">Previous</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for i in logs.paginator.page_range %}
+                                    {% if logs.number == i %}
+                                        <li class="page-item active">
+                                            <a class="page-link" href="#">{{ i }}</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ i }}&blood_group={{ selected_blood_group|default:'' }}&action={{ selected_action|default:'' }}">{{ i }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if logs.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ logs.next_page_number }}&blood_group={{ selected_blood_group|default:'' }}&action={{ selected_action|default:'' }}">Next</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" tabindex="-1">Next</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if not log_view %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Blood Inventory Chart
+        var ctx = document.getElementById('bloodInventoryChart').getContext('2d');
+        var bloodData = {
+            labels: [{% for item in inventory %}'{{ item.blood_group }}',{% endfor %}],
+            datasets: [{
+                data: [{% for item in inventory %}{{ item.units_available }},{% endfor %}],
+                backgroundColor: [
+                    '#dc3545', // A+
+                    '#e35d6a', // A-
+                    '#0d6efd', // B+
+                    '#4d94ff', // B-
+                    '#6610f2', // AB+
+                    '#8540f5', // AB-
+                    '#20c997', // O+
+                    '#5dd6b4'  // O-
+                ],
+                borderWidth: 1
+            }]
+        };
+        
+        var bloodInventoryChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: bloodData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 15,
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var label = context.label || '';
+                                var value = context.raw || 0;
+                                var total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                var percentage = Math.round((value / total) * 100);
+                                return label + ': ' + value + ' units (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}

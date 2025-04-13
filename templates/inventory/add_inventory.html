@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block title %}Update Inventory - Blood Donation Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-edit me-2"></i>Update Blood Inventory</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.blood_group.id_for_label }}" class="form-label">Blood Group</label>
+                            {{ form.blood_group }}
+                            {% if form.blood_group.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.blood_group.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.action.id_for_label }}" class="form-label">Action</label>
+                            {{ form.action }}
+                            {% if form.action.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.action.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.units.id_for_label }}" class="form-label">Units</label>
+                            {{ form.units }}
+                            {% if form.units.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.units.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label">Notes (Reason for Update)</label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.notes.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'inventory_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Update Inventory</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow mt-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>About Inventory Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card h-100 border-success">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0">Add Units</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">
+                                    Increases the available units for the selected blood group.
+                                    Use this when receiving new donations or transfers from other facilities.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card h-100 border-warning">
+                            <div class="card-header bg-warning text-dark">
+                                <h6 class="mb-0">Remove Units</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">
+                                    Decreases the available units for the selected blood group.
+                                    Use this when blood is used, transferred out, or expires.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card h-100 border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0">Adjust to Exact Amount</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">
+                                    Sets the inventory to the exact specified amount.
+                                    Use this for inventory corrections or after audits.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const actionSelect = document.getElementById('{{ form.action.id_for_label }}');
+        const unitsLabel = document.querySelector('label[for="{{ form.units.id_for_label }}"]');
+        
+        actionSelect.addEventListener('change', function() {
+            if (this.value === 'adjust') {
+                unitsLabel.textContent = 'Set Units To';
+            } else {
+                unitsLabel.textContent = 'Units';
+            }
+        });
+    });
+</script>
+{% endblock %}

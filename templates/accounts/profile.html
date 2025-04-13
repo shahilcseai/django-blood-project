@@ -1,0 +1,396 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if edit_mode %}
+        Edit Profile - Blood Donation Management System
+    {% else %}
+        My Profile - Blood Donation Management System
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 offset-md-1">
+        {% if edit_mode %}
+            <!-- Edit Profile Form -->
+            <div class="card shadow">
+                <div class="card-header {% if user.is_donor %}bg-danger{% elif user.is_requester %}bg-primary{% else %}bg-dark{% endif %} text-white">
+                    <h4 class="mb-0"><i class="fas fa-user-edit me-2"></i>Edit Profile</h4>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <h5 class="mb-3">Account Information</h5>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ user_form.first_name.id_for_label }}" class="form-label">First Name</label>
+                                {{ user_form.first_name }}
+                                {% if user_form.first_name.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in user_form.first_name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ user_form.last_name.id_for_label }}" class="form-label">Last Name</label>
+                                {{ user_form.last_name }}
+                                {% if user_form.last_name.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in user_form.last_name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ user_form.email.id_for_label }}" class="form-label">Email</label>
+                                {{ user_form.email }}
+                                {% if user_form.email.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in user_form.email.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        {% if user.is_donor %}
+                            <!-- Donor Profile Fields -->
+                            <div class="row">
+                                <h5 class="mb-3">Donor Information</h5>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ profile_form.phone.id_for_label }}" class="form-label">Phone Number</label>
+                                    {{ profile_form.phone }}
+                                    {% if profile_form.phone.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in profile_form.phone.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ profile_form.date_of_birth.id_for_label }}" class="form-label">Date of Birth</label>
+                                    {{ profile_form.date_of_birth }}
+                                    {% if profile_form.date_of_birth.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in profile_form.date_of_birth.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ profile_form.blood_group.id_for_label }}" class="form-label">Blood Group</label>
+                                    {{ profile_form.blood_group }}
+                                    {% if profile_form.blood_group.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in profile_form.blood_group.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-12 mb-3">
+                                    <label for="{{ profile_form.address.id_for_label }}" class="form-label">Address</label>
+                                    {{ profile_form.address }}
+                                    {% if profile_form.address.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in profile_form.address.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-12 mb-3">
+                                    <label for="{{ profile_form.medical_conditions.id_for_label }}" class="form-label">Medical Conditions (Optional)</label>
+                                    {{ profile_form.medical_conditions }}
+                                    {% if profile_form.medical_conditions.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in profile_form.medical_conditions.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% elif user.is_requester %}
+                            <!-- Requester Profile Fields -->
+                            <div class="row">
+                                <h5 class="mb-3">Organization Information</h5>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ profile_form.organization_name.id_for_label }}" class="form-label">Organization Name</label>
+                                    {{ profile_form.organization_name }}
+                                    {% if profile_form.organization_name.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in profile_form.organization_name.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ profile_form.organization_type.id_for_label }}" class="form-label">Organization Type</label>
+                                    {{ profile_form.organization_type }}
+                                    {% if profile_form.organization_type.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in profile_form.organization_type.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ profile_form.contact_phone.id_for_label }}" class="form-label">Contact Phone</label>
+                                    {{ profile_form.contact_phone }}
+                                    {% if profile_form.contact_phone.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in profile_form.contact_phone.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-12 mb-3">
+                                    <label for="{{ profile_form.address.id_for_label }}" class="form-label">Address</label>
+                                    {{ profile_form.address }}
+                                    {% if profile_form.address.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in profile_form.address.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'profile' %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn {% if user.is_donor %}btn-danger{% elif user.is_requester %}btn-primary{% else %}btn-dark{% endif %}">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <!-- Profile View -->
+            <div class="card shadow">
+                <div class="card-header {% if user.is_donor %}bg-danger{% elif user.is_requester %}bg-primary{% else %}bg-dark{% endif %} text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-user-circle me-2"></i>
+                            {% if user.get_full_name %}
+                                {{ user.get_full_name }}'s Profile
+                            {% else %}
+                                {{ user.username }}'s Profile
+                            {% endif %}
+                        </h4>
+                        <a href="{% url 'edit_profile' %}" class="btn btn-sm btn-light">
+                            <i class="fas fa-edit me-1"></i>Edit Profile
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-4 mb-md-0">
+                            <div class="profile-icon {% if user.is_donor %}bg-danger{% elif user.is_requester %}bg-primary{% else %}bg-dark{% endif %} text-white rounded-circle mx-auto mb-3">
+                                <i class="fas {% if user.is_donor %}fa-user{% elif user.is_requester %}fa-hospital{% else %}fa-user-shield{% endif %} fa-3x"></i>
+                            </div>
+                            <h5>
+                                {% if user.get_full_name %}
+                                    {{ user.get_full_name }}
+                                {% else %}
+                                    {{ user.username }}
+                                {% endif %}
+                            </h5>
+                            <p class="text-muted">
+                                <span class="badge {% if user.is_donor %}bg-danger{% elif user.is_requester %}bg-primary{% else %}bg-dark{% endif %}">
+                                    {{ user.get_user_type_display }}
+                                </span>
+                            </p>
+                            <p class="mb-1"><i class="fas fa-envelope me-2"></i>{{ user.email }}</p>
+                            
+                            {% if user.is_donor %}
+                                <p class="mb-1"><i class="fas fa-phone me-2"></i>{{ user.donor_profile.phone }}</p>
+                                <p class="mb-1">
+                                    <i class="fas fa-tint me-2"></i>
+                                    <span class="badge bg-danger">{{ user.donor_profile.blood_group }}</span>
+                                </p>
+                            {% elif user.is_requester %}
+                                <p class="mb-1"><i class="fas fa-phone me-2"></i>{{ user.requester_profile.contact_phone }}</p>
+                                <p class="mb-1">
+                                    <i class="fas fa-check-circle me-2 {% if user.requester_profile.verified %}text-success{% else %}text-warning{% endif %}"></i>
+                                    {% if user.requester_profile.verified %}
+                                        Verified
+                                    {% else %}
+                                        Pending Verification
+                                    {% endif %}
+                                </p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-8">
+                            {% if user.is_donor %}
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Donor Information</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-sm-4 text-muted">Date of Birth:</div>
+                                            <div class="col-sm-8">{{ user.donor_profile.date_of_birth }}</div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-sm-4 text-muted">Address:</div>
+                                            <div class="col-sm-8">{{ user.donor_profile.address }}</div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-sm-4 text-muted">Last Donation:</div>
+                                            <div class="col-sm-8">
+                                                {% if user.donor_profile.last_donation_date %}
+                                                    {{ user.donor_profile.last_donation_date }}
+                                                {% else %}
+                                                    No donations recorded
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-sm-4 text-muted">Medical Conditions:</div>
+                                            <div class="col-sm-8">
+                                                {% if user.donor_profile.medical_conditions %}
+                                                    {{ user.donor_profile.medical_conditions }}
+                                                {% else %}
+                                                    None reported
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Donation Statistics</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row text-center">
+                                            <div class="col-sm-6 mb-3 mb-sm-0">
+                                                <div class="p-3 border rounded">
+                                                    <h3 class="text-danger">{{ user.donor_profile.donation_count }}</h3>
+                                                    <p class="mb-0">Total Donations</p>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <div class="p-3 border rounded">
+                                                    <h3 class="text-danger">
+                                                        {% if user.donor_profile.last_donation_date %}
+                                                            {% if user.donor_profile.last_donation_date|timesince < "90 days" %}
+                                                                Ready to donate
+                                                            {% else %}
+                                                                Ready
+                                                            {% endif %}
+                                                        {% else %}
+                                                            Ready
+                                                        {% endif %}
+                                                    </h3>
+                                                    <p class="mb-0">Until Next Donation</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer text-center">
+                                        <a href="{% url 'donation_history' %}" class="btn btn-outline-danger">View Donation History</a>
+                                        <a href="{% url 'appointment_list' %}" class="btn btn-outline-danger">Manage Appointments</a>
+                                        <a href="{% url 'create_appointment' %}" class="btn btn-danger">Schedule Appointment</a>
+                                    </div>
+                                </div>
+                            {% elif user.is_requester %}
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Organization Information</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-sm-4 text-muted">Organization Name:</div>
+                                            <div class="col-sm-8">{{ user.requester_profile.organization_name }}</div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-sm-4 text-muted">Organization Type:</div>
+                                            <div class="col-sm-8">{{ user.requester_profile.get_organization_type_display }}</div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-sm-4 text-muted">Address:</div>
+                                            <div class="col-sm-8">{{ user.requester_profile.address }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Request Statistics</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row text-center">
+                                            <div class="col-sm-4 mb-3 mb-sm-0">
+                                                <div class="p-3 border rounded">
+                                                    <h3 class="text-primary">{{ user.requester_profile.request_count }}</h3>
+                                                    <p class="mb-0">Total Requests</p>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-4 mb-3 mb-sm-0">
+                                                <div class="p-3 border rounded">
+                                                    <h3 class="text-success">
+                                                        {% if user.blood_requests.fulfilled %}
+                                                            {{ user.blood_requests.fulfilled.count }}
+                                                        {% else %}
+                                                            0
+                                                        {% endif %}
+                                                    </h3>
+                                                    <p class="mb-0">Fulfilled</p>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-4">
+                                                <div class="p-3 border rounded">
+                                                    <h3 class="text-warning">
+                                                        {% if user.blood_requests.pending %}
+                                                            {{ user.blood_requests.pending.count }}
+                                                        {% else %}
+                                                            0
+                                                        {% endif %}
+                                                    </h3>
+                                                    <p class="mb-0">Pending</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer text-center">
+                                        <a href="{% url 'request_list' %}" class="btn btn-outline-primary">View Requests</a>
+                                        <a href="{% url 'create_request' %}" class="btn btn-primary">Create New Request</a>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

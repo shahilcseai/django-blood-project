@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block title %}Blood Request Details - Blood Donation Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 offset-md-1">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'request_list' %}">Blood Requests</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Request #{{ blood_request.id }}</li>
+            </ol>
+        </nav>
+        
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-tint me-2"></i>Blood Request #{{ blood_request.id }}
+                        
+                        {% if blood_request.status == 'pending' %}
+                            <span class="badge bg-secondary ms-2">Pending</span>
+                        {% elif blood_request.status == 'processing' %}
+                            <span class="badge bg-info text-dark ms-2">Processing</span>
+                        {% elif blood_request.status == 'fulfilled' %}
+                            <span class="badge bg-success ms-2">Fulfilled</span>
+                        {% elif blood_request.status == 'rejected' %}
+                            <span class="badge bg-danger ms-2">Rejected</span>
+                        {% elif blood_request.status == 'cancelled' %}
+                            <span class="badge bg-dark ms-2">Cancelled</span>
+                        {% endif %}
+                    </h4>
+                    
+                    <div>
+                        {% if can_respond %}
+                            <a href="{% url 'respond_to_request' blood_request.id %}" class="btn btn-light">
+                                <i class="fas fa-reply me-1"></i>Respond
+                            </a>
+                        {% endif %}
+                        
+                        {% if can_cancel %}
+                            <a href="{% url 'cancel_request' blood_request.id %}" class="btn btn-outline-light">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body p-4">
+                <div class="row">
+                    <!-- Request Basic Information -->
+                    <div class="col-md-6">
+                        <h5 class="border-bottom pb-2 mb-3">Request Information</h5>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-5 text-muted">Blood Group:</div>
+                            <div class="col-md-7">
+                                <span class="badge bg-danger">{{ blood_request.blood_group }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-5 text-muted">Units Needed:</div>
+                            <div class="col-md-7">{{ blood_request.units_needed }}</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-5 text-muted">Priority:</div>
+                            <div class="col-md-7">
+                                {% if blood_request.priority == 'critical' %}
+                                    <span class="badge bg-danger">Critical</span>
+                                {% elif blood_request.priority == 'high' %}
+                                    <span class="badge bg-warning text-dark">High</span>
+                                {% elif blood_request.priority == 'medium' %}
+                                    <span class="badge bg-primary">Medium</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Low</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-5 text-muted">Needed By:</div>
+                            <div class="col-md-7">
+                                {% if blood_request.needed_by %}
+                                    {{ blood_request.needed_by|date:"F d, Y" }}
+                                    {% if blood_request.is_past_due %}
+                                        <span class="badge bg-warning text-dark ms-2">Overdue</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-danger">As soon as possible</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-5 text-muted">Patient Name:</div>
+                            <div class="col-md-7">{{ blood_request.patient_name|default:"Not specified" }}</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-5 text-muted">Request Created:</div>
+                            <div class="col-md-7">{{ blood_request.created_at|date:"F d, Y, g:i A" }}</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-5 text-muted">Last Updated:</div>
+                            <div class="col-md-7">{{ blood_request.updated_at|date:"F d, Y, g:i A" }}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Requester Information & Status -->
+                    <div class="col-md-6">
+                        <h5 class="border-bottom pb-2 mb-3">Requester Information</h5>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-5 text-muted">Organization:</div>
+                            <div class="col-md-7">{{ blood_request.requester.requester_profile.organization_name }}</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-5 text-muted">Organization Type:</div>
+                            <div class="col-md-7">{{ blood_request.requester.requester_profile.get_organization_type_display }}</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-5 text-muted">Contact Person:</div>
+                            <div class="col-md-7">{{ blood_request.requester.get_full_name|default:blood_request.requester.username }}</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-5 text-muted">Contact Phone:</div>
+                            <div class="col-md-7">{{ blood_request.requester.requester_profile.contact_phone }}</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-5 text-muted">Email:</div>
+                            <div class="col-md-7">{{ blood_request.requester.email }}</div>
+                        </div>
+                        
+                        {% if blood_request.status == 'fulfilled' %}
+                            <div class="alert alert-success">
+                                <h6 class="alert-heading"><i class="fas fa-check-circle me-2"></i>Fulfilled</h6>
+                                <p class="mb-0">This request was fulfilled on {{ blood_request.fulfilled_date|date:"F d, Y" }}.</p>
+                            </div>
+                        {% elif blood_request.status == 'rejected' %}
+                            <div class="alert alert-danger">
+                                <h6 class="alert-heading"><i class="fas fa-times-circle me-2"></i>Rejected</h6>
+                                <p class="mb-0">{{ blood_request.rejected_reason }}</p>
+                            </div>
+                        {% elif blood_request.status == 'cancelled' %}
+                            <div class="alert alert-dark">
+                                <h6 class="alert-heading"><i class="fas fa-ban me-2"></i>Cancelled</h6>
+                                <p class="mb-0">This request was cancelled by the requester.</p>
+                            </div>
+                        {% elif blood_request.is_urgent %}
+                            <div class="alert alert-warning">
+                                <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Urgent Request</h6>
+                                <p class="mb-0">This request requires immediate attention.</p>
+                            </div>
+                        {% endif %}
+                        
+                        {% if is_staff %}
+                            <h6 class="mt-4">Inventory Status</h6>
+                            <div class="alert {% if available_units >= blood_request.units_needed %}alert-success{% else %}alert-warning{% endif %}">
+                                <p class="mb-0">
+                                    <strong>{{ blood_request.blood_group }} blood available:</strong> {{ available_units }} units
+                                    <br>
+                                    <strong>Required:</strong> {{ blood_request.units_needed }} units
+                                    <br>
+                                    {% if available_units >= blood_request.units_needed %}
+                                        <i class="fas fa-check-circle text-success me-1"></i>Sufficient inventory to fulfill this request.
+                                    {% else %}
+                                        <i class="fas fa-exclamation-circle text-warning me-1"></i>Not enough inventory to fulfill this request.
+                                    {% endif %}
+                                </p>
+                            </div>
+                            
+                            {% if blood_request.admin_notes %}
+                                <h6 class="mt-3">Internal Notes</h6>
+                                <div class="p-3 bg-light rounded">
+                                    {{ blood_request.admin_notes }}
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Additional Notes -->
+                    <div class="col-md-12 mt-4">
+                        <h5 class="border-bottom pb-2 mb-3">Additional Notes</h5>
+                        {% if blood_request.notes %}
+                            <div class="p-3 bg-light rounded">
+                                {{ blood_request.notes }}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">No additional notes provided.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-footer text-center">
+                <a href="{% url 'request_list' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Requests
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

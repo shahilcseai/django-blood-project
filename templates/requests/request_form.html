@@ -1,0 +1,285 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if cancel_mode %}
+        Cancel Blood Request - Blood Donation Management System
+    {% elif response_mode %}
+        Respond to Blood Request - Blood Donation Management System
+    {% else %}
+        Request Blood - Blood Donation Management System
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header {% if cancel_mode %}bg-warning{% elif response_mode %}bg-primary{% else %}bg-primary{% endif %} text-white">
+                <h4 class="mb-0">
+                    {% if cancel_mode %}
+                        <i class="fas fa-times-circle me-2"></i>Cancel Blood Request
+                    {% elif response_mode %}
+                        <i class="fas fa-reply me-2"></i>Respond to Blood Request
+                    {% else %}
+                        <i class="fas fa-tint me-2"></i>Request Blood
+                    {% endif %}
+                </h4>
+            </div>
+            
+            <div class="card-body p-4">
+                {% if cancel_mode %}
+                    <!-- Cancel Request Form -->
+                    <div class="alert alert-warning">
+                        <h5><i class="fas fa-exclamation-triangle me-2"></i>Are you sure you want to cancel this request?</h5>
+                        <p>
+                            Request details:<br>
+                            <strong>Blood Group:</strong> {{ blood_request.blood_group }}<br>
+                            <strong>Units Needed:</strong> {{ blood_request.units_needed }}<br>
+                            <strong>Priority:</strong> {{ blood_request.get_priority_display }}<br>
+                            <strong>Needed By:</strong> {% if blood_request.needed_by %}{{ blood_request.needed_by|date:"F d, Y" }}{% else %}As soon as possible{% endif %}
+                        </p>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'request_list' %}" class="btn btn-outline-secondary">Go Back</a>
+                            <button type="submit" class="btn btn-warning">Confirm Cancellation</button>
+                        </div>
+                    </form>
+                    
+                {% elif response_mode %}
+                    <!-- Response to Request Form -->
+                    <div class="alert alert-info mb-4">
+                        <p class="mb-0">
+                            <strong>Requester:</strong> {{ blood_request.requester.requester_profile.organization_name }}<br>
+                            <strong>Blood Group:</strong> {{ blood_request.blood_group }}<br>
+                            <strong>Units Needed:</strong> {{ blood_request.units_needed }}<br>
+                            <strong>Priority:</strong> {{ blood_request.get_priority_display }}<br>
+                            <strong>Current Inventory:</strong> {{ available_units }} units available
+                        </p>
+                    </div>
+                    
+                    {% if not enough_inventory %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Not enough units in inventory to fulfill this request.
+                        </div>
+                    {% endif %}
+                    
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">Update Status</label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.status.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3" id="rejected_reason_group">
+                            <label for="{{ form.rejected_reason.id_for_label }}" class="form-label">Rejection Reason</label>
+                            {{ form.rejected_reason }}
+                            {% if form.rejected_reason.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.rejected_reason.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Required if rejecting the request.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.admin_notes.id_for_label }}" class="form-label">Internal Notes</label>
+                            {{ form.admin_notes }}
+                            {% if form.admin_notes.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.admin_notes.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">These notes are only visible to staff and won't be sent to the requester.</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'request_detail' blood_request.id %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Submit Response</button>
+                        </div>
+                    </form>
+                    
+                {% else %}
+                    <!-- New Blood Request Form -->
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="alert alert-info mb-4">
+                            <h5><i class="fas fa-info-circle me-2"></i>Current Blood Inventory</h5>
+                            <div class="row">
+                                {% for group, units in inventory_levels.items %}
+                                    <div class="col-md-3 col-sm-6 mb-2">
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-danger me-2">{{ group }}</span>
+                                            <span>{{ units }} units</span>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.blood_group.id_for_label }}" class="form-label">Blood Group <span class="text-danger">*</span></label>
+                                {{ form.blood_group }}
+                                {% if form.blood_group.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.blood_group.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.units_needed.id_for_label }}" class="form-label">Units Needed <span class="text-danger">*</span></label>
+                                {{ form.units_needed }}
+                                {% if form.units_needed.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.units_needed.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.priority.id_for_label }}" class="form-label">Priority <span class="text-danger">*</span></label>
+                                {{ form.priority }}
+                                {% if form.priority.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.priority.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.needed_by.id_for_label }}" class="form-label">Needed By</label>
+                                {{ form.needed_by }}
+                                {% if form.needed_by.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.needed_by.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Not required for critical priority.</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.patient_name.id_for_label }}" class="form-label">Patient Name (Optional)</label>
+                                {{ form.patient_name }}
+                                {% if form.patient_name.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.patient_name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">Additional Notes</label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.notes.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'request_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Submit Request</button>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if response_mode %}
+        // Toggle rejection reason field visibility based on status
+        const statusSelect = document.getElementById('{{ form.status.id_for_label }}');
+        const rejectedReasonGroup = document.getElementById('rejected_reason_group');
+        
+        function updateRejectionReasonVisibility() {
+            if (statusSelect.value === 'rejected') {
+                rejectedReasonGroup.style.display = 'block';
+            } else {
+                rejectedReasonGroup.style.display = 'none';
+            }
+        }
+        
+        // Initialize visibility
+        updateRejectionReasonVisibility();
+        
+        // Update on change
+        statusSelect.addEventListener('change', updateRejectionReasonVisibility);
+        {% endif %}
+        
+        {% if not cancel_mode and not response_mode %}
+        // Update needed_by field based on priority
+        const prioritySelect = document.getElementById('{{ form.priority.id_for_label }}');
+        const neededByField = document.getElementById('{{ form.needed_by.id_for_label }}');
+        const neededByLabel = document.querySelector('label[for="{{ form.needed_by.id_for_label }}"]');
+        
+        function updateNeededByRequirement() {
+            if (prioritySelect.value === 'critical') {
+                neededByField.removeAttribute('required');
+                neededByField.disabled = true;
+                neededByLabel.innerHTML = 'Needed By <span class="text-muted">(not required for critical)</span>';
+            } else {
+                neededByField.setAttribute('required', 'required');
+                neededByField.disabled = false;
+                neededByLabel.innerHTML = 'Needed By <span class="text-danger">*</span>';
+            }
+        }
+        
+        // Initialize field state
+        updateNeededByRequirement();
+        
+        // Update on change
+        prioritySelect.addEventListener('change', updateNeededByRequirement);
+        {% endif %}
+    });
+</script>
+{% endblock %}

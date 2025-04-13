@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Blood Donation Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Section -->
+    <div class="row align-items-center py-5">
+        <div class="col-lg-6">
+            <h1 class="display-4 fw-bold text-danger">Donate Blood, Save Lives</h1>
+            <p class="lead">Your donation can make a difference in someone's life. Join our community of donors and help those in need.</p>
+            
+            {% if not user.is_authenticated %}
+            <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                <a href="{% url 'donor_register' %}" class="btn btn-danger btn-lg px-4 me-md-2">Become a Donor</a>
+                <a href="{% url 'requester_register' %}" class="btn btn-outline-secondary btn-lg px-4">Request Blood</a>
+            </div>
+            {% else %}
+            <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                <a href="{% url 'dashboard' %}" class="btn btn-danger btn-lg px-4 me-md-2">Go to Dashboard</a>
+                {% if user.is_donor %}
+                <a href="{% url 'create_appointment' %}" class="btn btn-outline-secondary btn-lg px-4">Schedule Donation</a>
+                {% elif user.is_requester %}
+                <a href="{% url 'create_request' %}" class="btn btn-outline-secondary btn-lg px-4">Request Blood</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        <div class="col-lg-6">
+            <div class="text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" height="400"> <path fill="#DA2F47" d="M28.344 17.768L18.148 1.09 8.7 17.654c-2.2 3.51-2.392 8.074-.081 11.854 3.285 5.373 10.363 7.098 15.811 3.857 5.446-3.24 7.199-10.22 3.914-15.597z"/></svg>   
+            </div>
+        </div>
+    </div>
+
+    <!-- Why Donate Section -->
+    <div class="row py-5">
+        <div class="col-12 text-center mb-4">
+            <h2 class="fw-bold">Why Donate Blood?</h2>
+            <p class="lead">Your donation is essential to maintain the blood supply needed to save lives.</p>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon bg-danger bg-gradient text-white rounded-circle mb-3">
+                        <i class="fas fa-heartbeat fa-2x p-3"></i>
+                    </div>
+                    <h4>Save Lives</h4>
+                    <p>A single donation can save up to three lives, helping accident victims, surgical patients, and those battling cancer.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon bg-danger bg-gradient text-white rounded-circle mb-3">
+                        <i class="fas fa-clock fa-2x p-3"></i>
+                    </div>
+                    <h4>Quick Process</h4>
+                    <p>The donation process takes only about 10-15 minutes. The entire visit, including registration and refreshments, takes about an hour.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon bg-danger bg-gradient text-white rounded-circle mb-3">
+                        <i class="fas fa-sync-alt fa-2x p-3"></i>
+                    </div>
+                    <h4>Regular Need</h4>
+                    <p>Blood has a limited shelf life and must be constantly replenished to ensure hospitals have adequate supplies for all patients.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blood Compatibility Chart -->
+    <div class="row py-5 bg-light rounded-3">
+        <div class="col-12 text-center mb-4">
+            <h2 class="fw-bold">Blood Type Compatibility Chart</h2>
+            <p class="lead">Understanding blood type compatibility is crucial for successful transfusions.</p>
+        </div>
+        
+        <div class="col-lg-8 offset-lg-2">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="table-danger">
+                        <tr>
+                            <th>Blood Type</th>
+                            <th>Can Give To</th>
+                            <th>Can Receive From</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>O-</strong></td>
+                            <td>All blood types (Universal donor)</td>
+                            <td>O-</td>
+                        </tr>
+                        <tr>
+                            <td><strong>O+</strong></td>
+                            <td>O+, A+, B+, AB+</td>
+                            <td>O+, O-</td>
+                        </tr>
+                        <tr>
+                            <td><strong>A-</strong></td>
+                            <td>A-, A+, AB-, AB+</td>
+                            <td>A-, O-</td>
+                        </tr>
+                        <tr>
+                            <td><strong>A+</strong></td>
+                            <td>A+, AB+</td>
+                            <td>A+, A-, O+, O-</td>
+                        </tr>
+                        <tr>
+                            <td><strong>B-</strong></td>
+                            <td>B-, B+, AB-, AB+</td>
+                            <td>B-, O-</td>
+                        </tr>
+                        <tr>
+                            <td><strong>B+</strong></td>
+                            <td>B+, AB+</td>
+                            <td>B+, B-, O+, O-</td>
+                        </tr>
+                        <tr>
+                            <td><strong>AB-</strong></td>
+                            <td>AB-, AB+</td>
+                            <td>AB-, A-, B-, O-</td>
+                        </tr>
+                        <tr>
+                            <td><strong>AB+</strong></td>
+                            <td>AB+ only</td>
+                            <td>All blood types (Universal recipient)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Donation Process -->
+    <div class="row py-5">
+        <div class="col-12 text-center mb-4">
+            <h2 class="fw-bold">Donation Process</h2>
+            <p class="lead">Learn what to expect when you donate blood</p>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card h-100 border-danger">
+                <div class="card-header bg-danger text-white text-center">
+                    <h5 class="mb-0">Step 1</h5>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Registration</h5>
+                    <p class="card-text">You'll sign in, show ID, and read some information about donating blood.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card h-100 border-danger">
+                <div class="card-header bg-danger text-white text-center">
+                    <h5 class="mb-0">Step 2</h5>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Health History</h5>
+                    <p class="card-text">We'll ask questions about your health history and check your temperature, pulse, blood pressure, and hemoglobin levels.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card h-100 border-danger">
+                <div class="card-header bg-danger text-white text-center">
+                    <h5 class="mb-0">Step 3</h5>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Donation</h5>
+                    <p class="card-text">The actual donation takes about 10-15 minutes. You'll be seated comfortably while a pint of blood is drawn.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card h-100 border-danger">
+                <div class="card-header bg-danger text-white text-center">
+                    <h5 class="mb-0">Step 4</h5>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Refreshments</h5>
+                    <p class="card-text">After donating, you'll have a snack and drink to help replenish fluids before leaving.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Call to Action -->
+    <div class="row py-5">
+        <div class="col-12">
+            <div class="p-5 text-center bg-danger rounded-3 text-white">
+                <h2 class="fw-bold">Ready to Save Lives?</h2>
+                <p class="lead mb-4">Join our community of donors today or request blood if you need it.</p>
+                
+                {% if not user.is_authenticated %}
+                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                    <a href="{% url 'donor_register' %}" class="btn btn-light btn-lg px-4 me-sm-3">Register as Donor</a>
+                    <a href="{% url 'requester_register' %}" class="btn btn-outline-light btn-lg px-4">Register as Requester</a>
+                </div>
+                {% else %}
+                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                    <a href="{% url 'dashboard' %}" class="btn btn-light btn-lg px-4">Go to Dashboard</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

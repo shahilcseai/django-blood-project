@@ -1,0 +1,1156 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if search_mode %}
+        Search Results - Blood Donation Management System
+    {% else %}
+        Dashboard - Blood Donation Management System
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+{% if search_mode %}
+    <!-- Search Results View -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0"><i class="fas fa-search me-2"></i>Search Results</h4>
+                        <div>
+                            <form class="d-flex" action="{% url 'search' %}" method="GET">
+                                <input type="hidden" name="type" value="{{ search_type }}">
+                                <input class="form-control me-2" type="search" name="query" value="{{ query }}" placeholder="Search..." required>
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs mb-4">
+                        <li class="nav-item">
+                            <a class="nav-link {% if search_type == 'all' %}active{% endif %}" href="{% url 'search' %}?query={{ query }}&type=all">All Results</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if search_type == 'donors' %}active{% endif %}" href="{% url 'search' %}?query={{ query }}&type=donors">Donors</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if search_type == 'inventory' %}active{% endif %}" href="{% url 'search' %}?query={{ query }}&type=inventory">Inventory</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if search_type == 'requests' %}active{% endif %}" href="{% url 'search' %}?query={{ query }}&type=requests">Requests</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if search_type == 'donations' %}active{% endif %}" href="{% url 'search' %}?query={{ query }}&type=donations">Donations</a>
+                        </li>
+                    </ul>
+                    
+                    <!-- Donor Results -->
+                    {% if search_type == 'all' or search_type == 'donors' %}
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">Donors</h5>
+                            {% if results.donors %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Username</th>
+                                                <th>Email</th>
+                                                <th>Blood Group</th>
+                                                <th>Phone</th>
+                                                <th>Last Donation</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for donor in results.donors %}
+                                                <tr>
+                                                    <td>{{ donor.get_full_name|default:"-" }}</td>
+                                                    <td>{{ donor.username }}</td>
+                                                    <td>{{ donor.email }}</td>
+                                                    <td>
+                                                        <span class="badge bg-danger">{{ donor.donor_profile.blood_group }}</span>
+                                                    </td>
+                                                    <td>{{ donor.donor_profile.phone }}</td>
+                                                    <td>
+                                                        {% if donor.donor_profile.last_donation_date %}
+                                                            {{ donor.donor_profile.last_donation_date|date:"M d, Y" }}
+                                                        {% else %}
+                                                            Never
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <a href="{% url 'donation_history' %}?donor_id={{ donor.id }}" class="btn btn-outline-primary">
+                                                                <i class="fas fa-history"></i>
+                                                            </a>
+                                                            {% if is_staff %}
+                                                                <a href="{% url 'record_donation' %}?donor_id={{ donor.id }}" class="btn btn-outline-success">
+                                                                    <i class="fas fa-tint"></i>
+                                                                </a>
+                                                            {% endif %}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted">No donor matches found.</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Inventory Results -->
+                    {% if search_type == 'all' or search_type == 'inventory' %}
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">Blood Inventory</h5>
+                            {% if results.inventory %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Blood Group</th>
+                                                <th>Units Available</th>
+                                                <th>Status</th>
+                                                <th>Last Updated</th>
+                                                {% if is_staff %}
+                                                    <th>Actions</th>
+                                                {% endif %}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in results.inventory %}
+                                                <tr>
+                                                    <td>
+                                                        <span class="badge bg-danger">{{ item.blood_group }}</span>
+                                                    </td>
+                                                    <td>{{ item.units_available }}</td>
+                                                    <td>
+                                                        {% if item.is_low %}
+                                                            <span class="badge bg-warning text-dark">Low Stock</span>
+                                                        {% elif item.units_available == 0 %}
+                                                            <span class="badge bg-danger">Out of Stock</span>
+                                                        {% else %}
+                                                            <span class="badge bg-success">Available</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>{{ item.last_updated|date:"M d, Y H:i" }}</td>
+                                                    {% if is_staff %}
+                                                        <td>
+                                                            <a href="{% url 'update_inventory' %}?blood_group={{ item.blood_group }}" class="btn btn-sm btn-outline-primary">
+                                                                <i class="fas fa-edit"></i> Update
+                                                            </a>
+                                                        </td>
+                                                    {% endif %}
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted">No inventory matches found.</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Request Results -->
+                    {% if search_type == 'all' or search_type == 'requests' %}
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">Blood Requests</h5>
+                            {% if results.requests %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Requester</th>
+                                                <th>Blood Group</th>
+                                                <th>Units</th>
+                                                <th>Priority</th>
+                                                <th>Status</th>
+                                                <th>Created</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for request in results.requests %}
+                                                <tr>
+                                                    <td>{{ request.id }}</td>
+                                                    <td>{{ request.requester.requester_profile.organization_name }}</td>
+                                                    <td>
+                                                        <span class="badge bg-danger">{{ request.blood_group }}</span>
+                                                    </td>
+                                                    <td>{{ request.units_needed }}</td>
+                                                    <td>
+                                                        {% if request.priority == 'critical' %}
+                                                            <span class="badge bg-danger">Critical</span>
+                                                        {% elif request.priority == 'high' %}
+                                                            <span class="badge bg-warning text-dark">High</span>
+                                                        {% elif request.priority == 'medium' %}
+                                                            <span class="badge bg-primary">Medium</span>
+                                                        {% else %}
+                                                            <span class="badge bg-secondary">Low</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {% if request.status == 'pending' %}
+                                                            <span class="badge bg-secondary">Pending</span>
+                                                        {% elif request.status == 'processing' %}
+                                                            <span class="badge bg-info text-dark">Processing</span>
+                                                        {% elif request.status == 'fulfilled' %}
+                                                            <span class="badge bg-success">Fulfilled</span>
+                                                        {% elif request.status == 'rejected' %}
+                                                            <span class="badge bg-danger">Rejected</span>
+                                                        {% elif request.status == 'cancelled' %}
+                                                            <span class="badge bg-dark">Cancelled</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>{{ request.created_at|date:"M d, Y" }}</td>
+                                                    <td>
+                                                        <a href="{% url 'request_detail' request.id %}" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-eye"></i> View
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted">No request matches found.</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Donation Results -->
+                    {% if search_type == 'all' or search_type == 'donations' %}
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">Donations</h5>
+                            {% if results.donations %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Donor</th>
+                                                <th>Date</th>
+                                                <th>Blood Group</th>
+                                                <th>Units</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for donation in results.donations %}
+                                                <tr>
+                                                    <td>{{ donation.id }}</td>
+                                                    <td>{{ donation.donor.get_full_name|default:donation.donor.username }}</td>
+                                                    <td>{{ donation.donation_date|date:"M d, Y" }}</td>
+                                                    <td>
+                                                        <span class="badge bg-danger">{{ donation.blood_group }}</span>
+                                                    </td>
+                                                    <td>{{ donation.units }}</td>
+                                                    <td>
+                                                        {% if donation.status == 'pending' %}
+                                                            <span class="badge bg-secondary">Pending</span>
+                                                        {% elif donation.status == 'approved' %}
+                                                            <span class="badge bg-success">Approved</span>
+                                                        {% elif donation.status == 'rejected' %}
+                                                            <span class="badge bg-danger">Rejected</span>
+                                                        {% elif donation.status == 'expired' %}
+                                                            <span class="badge bg-warning text-dark">Expired</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <a href="{% url 'donation_history' %}?donation_id={{ donation.id }}" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-eye"></i> View
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted">No donation matches found.</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <!-- Regular Dashboard View -->
+    {% if user.is_donor %}
+        <!-- Donor Dashboard -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header bg-danger text-white">
+                        <h4 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>Donor Dashboard</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <h5 class="border-bottom pb-2">Your Donation Stats</h5>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="card bg-light mb-3">
+                                                <div class="card-body text-center">
+                                                    <h3 class="text-danger mb-0">{{ total_donations }}</h3>
+                                                    <p class="text-muted mb-0">Total Donations</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="card bg-light mb-3">
+                                                <div class="card-body text-center">
+                                                    <h3 class="text-danger mb-0">{{ total_units }}</h3>
+                                                    <p class="text-muted mb-0">Units Donated</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <h5 class="border-bottom pb-2">Donation Status</h5>
+                                    {% if can_donate_now %}
+                                        <div class="alert alert-success">
+                                            <i class="fas fa-check-circle me-2"></i>You are eligible to donate blood!
+                                            <div class="mt-2">
+                                                <a href="{% url 'create_appointment' %}" class="btn btn-sm btn-success">Schedule Appointment</a>
+                                            </div>
+                                        </div>
+                                    {% elif days_to_wait %}
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-clock me-2"></i>You need to wait <strong>{{ days_to_wait }} more days</strong> before donating again.
+                                            <div class="mt-2">
+                                                <small class="text-muted">Your last donation was on {{ donor_profile.last_donation_date|date:"F d, Y" }}.</small>
+                                                <br>
+                                                <small class="text-muted">You'll be eligible to donate again on {{ next_donation_date|date:"F d, Y" }}.</small>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-success">
+                                            <i class="fas fa-check-circle me-2"></i>You are eligible to donate blood!
+                                            <div class="mt-2">
+                                                <a href="{% url 'create_appointment' %}" class="btn btn-sm btn-success">Schedule Appointment</a>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div>
+                                    <h5 class="border-bottom pb-2">Your Blood Type Information</h5>
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="bg-danger text-white p-3 rounded-circle me-3">
+                                                    <h3 class="mb-0">{{ donor_profile.blood_group }}</h3>
+                                                </div>
+                                                <div>
+                                                    <h5>Blood Type: {{ donor_profile.blood_group }}</h5>
+                                                    <p class="mb-0 text-muted">Your donation helps save lives!</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <h6>You can donate to:</h6>
+                                                    <ul class="list-unstyled">
+                                                        {% if donor_profile.blood_group == 'O-' %}
+                                                            <li><span class="badge bg-danger">A+</span> <span class="badge bg-danger">A-</span></li>
+                                                            <li><span class="badge bg-danger">B+</span> <span class="badge bg-danger">B-</span></li>
+                                                            <li><span class="badge bg-danger">AB+</span> <span class="badge bg-danger">AB-</span></li>
+                                                            <li><span class="badge bg-danger">O+</span> <span class="badge bg-danger">O-</span></li>
+                                                        {% elif donor_profile.blood_group == 'O+' %}
+                                                            <li><span class="badge bg-danger">A+</span> <span class="badge bg-danger">B+</span></li>
+                                                            <li><span class="badge bg-danger">AB+</span> <span class="badge bg-danger">O+</span></li>
+                                                        {% elif donor_profile.blood_group == 'A-' %}
+                                                            <li><span class="badge bg-danger">A+</span> <span class="badge bg-danger">A-</span></li>
+                                                            <li><span class="badge bg-danger">AB+</span> <span class="badge bg-danger">AB-</span></li>
+                                                        {% elif donor_profile.blood_group == 'A+' %}
+                                                            <li><span class="badge bg-danger">A+</span> <span class="badge bg-danger">AB+</span></li>
+                                                        {% elif donor_profile.blood_group == 'B-' %}
+                                                            <li><span class="badge bg-danger">B+</span> <span class="badge bg-danger">B-</span></li>
+                                                            <li><span class="badge bg-danger">AB+</span> <span class="badge bg-danger">AB-</span></li>
+                                                        {% elif donor_profile.blood_group == 'B+' %}
+                                                            <li><span class="badge bg-danger">B+</span> <span class="badge bg-danger">AB+</span></li>
+                                                        {% elif donor_profile.blood_group == 'AB-' %}
+                                                            <li><span class="badge bg-danger">AB+</span> <span class="badge bg-danger">AB-</span></li>
+                                                        {% elif donor_profile.blood_group == 'AB+' %}
+                                                            <li><span class="badge bg-danger">AB+</span></li>
+                                                        {% endif %}
+                                                    </ul>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6>You can receive from:</h6>
+                                                    <ul class="list-unstyled">
+                                                        {% if donor_profile.blood_group == 'O-' %}
+                                                            <li><span class="badge bg-danger">O-</span></li>
+                                                        {% elif donor_profile.blood_group == 'O+' %}
+                                                            <li><span class="badge bg-danger">O+</span> <span class="badge bg-danger">O-</span></li>
+                                                        {% elif donor_profile.blood_group == 'A-' %}
+                                                            <li><span class="badge bg-danger">A-</span> <span class="badge bg-danger">O-</span></li>
+                                                        {% elif donor_profile.blood_group == 'A+' %}
+                                                            <li><span class="badge bg-danger">A+</span> <span class="badge bg-danger">A-</span></li>
+                                                            <li><span class="badge bg-danger">O+</span> <span class="badge bg-danger">O-</span></li>
+                                                        {% elif donor_profile.blood_group == 'B-' %}
+                                                            <li><span class="badge bg-danger">B-</span> <span class="badge bg-danger">O-</span></li>
+                                                        {% elif donor_profile.blood_group == 'B+' %}
+                                                            <li><span class="badge bg-danger">B+</span> <span class="badge bg-danger">B-</span></li>
+                                                            <li><span class="badge bg-danger">O+</span> <span class="badge bg-danger">O-</span></li>
+                                                        {% elif donor_profile.blood_group == 'AB-' %}
+                                                            <li><span class="badge bg-danger">A-</span> <span class="badge bg-danger">B-</span></li>
+                                                            <li><span class="badge bg-danger">AB-</span> <span class="badge bg-danger">O-</span></li>
+                                                        {% elif donor_profile.blood_group == 'AB+' %}
+                                                            <li><span class="badge bg-danger">All blood types</span></li>
+                                                        {% endif %}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <h5 class="border-bottom pb-2">Upcoming Appointments</h5>
+                                    {% if upcoming_appointments %}
+                                        <div class="list-group">
+                                            {% for appointment in upcoming_appointments %}
+                                                <div class="list-group-item list-group-item-action">
+                                                    <div class="d-flex w-100 justify-content-between">
+                                                        <h6 class="mb-1">
+                                                            <i class="fas fa-calendar-day me-2 text-danger"></i>
+                                                            {{ appointment.appointment_date|date:"F d, Y" }}
+                                                        </h6>
+                                                        <small>
+                                                            {% if appointment.status == 'pending' %}
+                                                                <span class="badge bg-secondary">Pending</span>
+                                                            {% elif appointment.status == 'confirmed' %}
+                                                                <span class="badge bg-success">Confirmed</span>
+                                                            {% endif %}
+                                                        </small>
+                                                    </div>
+                                                    <p class="mb-1">{{ appointment.appointment_date|time:"g:i A" }}</p>
+                                                    {% if appointment.notes %}
+                                                        <small class="text-muted">{{ appointment.notes|truncatechars:50 }}</small>
+                                                    {% endif %}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="mt-3">
+                                            <a href="{% url 'appointment_list' %}" class="btn btn-outline-danger btn-sm">View All Appointments</a>
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>You don't have any upcoming appointments.
+                                            {% if can_donate_now %}
+                                                <div class="mt-2">
+                                                    <a href="{% url 'create_appointment' %}" class="btn btn-danger btn-sm">Schedule an Appointment</a>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div>
+                                    <h5 class="border-bottom pb-2">Recent Donations</h5>
+                                    {% if recent_donations %}
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th>Blood Group</th>
+                                                        <th>Units</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for donation in recent_donations %}
+                                                        <tr>
+                                                            <td>{{ donation.donation_date|date:"M d, Y" }}</td>
+                                                            <td>
+                                                                <span class="badge bg-danger">{{ donation.blood_group }}</span>
+                                                            </td>
+                                                            <td>{{ donation.units }}</td>
+                                                            <td>
+                                                                {% if donation.status == 'pending' %}
+                                                                    <span class="badge bg-secondary">Pending</span>
+                                                                {% elif donation.status == 'approved' %}
+                                                                    <span class="badge bg-success">Approved</span>
+                                                                {% elif donation.status == 'rejected' %}
+                                                                    <span class="badge bg-danger">Rejected</span>
+                                                                {% elif donation.status == 'expired' %}
+                                                                    <span class="badge bg-warning text-dark">Expired</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div class="mt-3">
+                                            <a href="{% url 'donation_history' %}" class="btn btn-outline-danger btn-sm">View Donation History</a>
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>You haven't made any donations yet.
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Blood Inventory</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="bloodInventoryChart" width="100%" height="250"></canvas>
+                    </div>
+                </div>
+                
+                <div class="card shadow">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Health Tips for Donors</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="healthTipsCarousel" class="carousel slide" data-bs-ride="carousel">
+                            <div class="carousel-inner">
+                                <div class="carousel-item active">
+                                    <div class="p-3">
+                                        <h5><i class="fas fa-utensils text-danger me-2"></i>Before Donation</h5>
+                                        <ul>
+                                            <li>Eat a healthy meal before donating</li>
+                                            <li>Drink plenty of water</li>
+                                            <li>Get a good night's sleep</li>
+                                            <li>Avoid fatty foods before donation</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="carousel-item">
+                                    <div class="p-3">
+                                        <h5><i class="fas fa-heartbeat text-danger me-2"></i>After Donation</h5>
+                                        <ul>
+                                            <li>Drink extra fluids for 48 hours</li>
+                                            <li>Avoid strenuous physical activity</li>
+                                            <li>Keep the bandage on for at least 4 hours</li>
+                                            <li>Eat iron-rich foods (meat, beans, spinach)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="carousel-item">
+                                    <div class="p-3">
+                                        <h5><i class="fas fa-hand-holding-heart text-danger me-2"></i>Benefits of Donating</h5>
+                                        <ul>
+                                            <li>Free mini health check-up</li>
+                                            <li>Reduces risk of heart disease</li>
+                                            <li>Stimulates blood cell production</li>
+                                            <li>Burns calories (up to 650 per donation)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="carousel-control-prev" type="button" data-bs-target="#healthTipsCarousel" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon bg-danger rounded-circle" aria-hidden="true"></span>
+                                <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#healthTipsCarousel" data-bs-slide="next">
+                                <span class="carousel-control-next-icon bg-danger rounded-circle" aria-hidden="true"></span>
+                                <span class="visually-hidden">Next</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+    {% elif user.is_requester %}
+        <!-- Requester Dashboard -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>Requester Dashboard</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body text-center">
+                                        <h1 class="display-4 text-primary">{{ total_requests }}</h1>
+                                        <p class="text-muted mb-0">Total Requests</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body text-center">
+                                        <h1 class="display-4 text-success">{{ fulfilled_requests }}</h1>
+                                        <p class="text-muted mb-0">Fulfilled Requests</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body text-center">
+                                        <h1 class="display-4 text-primary">{{ active_requests }}</h1>
+                                        <p class="text-muted mb-0">Active Requests</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h5 class="border-bottom pb-2 mb-3">Recent Requests</h5>
+                            {% if recent_requests %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Blood Group</th>
+                                                <th>Units</th>
+                                                <th>Priority</th>
+                                                <th>Needed By</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for request in recent_requests %}
+                                                <tr>
+                                                    <td>{{ request.id }}</td>
+                                                    <td>
+                                                        <span class="badge bg-danger">{{ request.blood_group }}</span>
+                                                    </td>
+                                                    <td>{{ request.units_needed }}</td>
+                                                    <td>
+                                                        {% if request.priority == 'critical' %}
+                                                            <span class="badge bg-danger">Critical</span>
+                                                        {% elif request.priority == 'high' %}
+                                                            <span class="badge bg-warning text-dark">High</span>
+                                                        {% elif request.priority == 'medium' %}
+                                                            <span class="badge bg-primary">Medium</span>
+                                                        {% else %}
+                                                            <span class="badge bg-secondary">Low</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {% if request.needed_by %}
+                                                            {{ request.needed_by|date:"M d, Y" }}
+                                                        {% else %}
+                                                            <span class="text-danger">ASAP</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {% if request.status == 'pending' %}
+                                                            <span class="badge bg-secondary">Pending</span>
+                                                        {% elif request.status == 'processing' %}
+                                                            <span class="badge bg-info text-dark">Processing</span>
+                                                        {% elif request.status == 'fulfilled' %}
+                                                            <span class="badge bg-success">Fulfilled</span>
+                                                        {% elif request.status == 'rejected' %}
+                                                            <span class="badge bg-danger">Rejected</span>
+                                                        {% elif request.status == 'cancelled' %}
+                                                            <span class="badge bg-dark">Cancelled</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <a href="{% url 'request_detail' request.id %}" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="text-center mt-3">
+                                    <a href="{% url 'request_list' %}" class="btn btn-outline-primary">View All Requests</a>
+                                    <a href="{% url 'create_request' %}" class="btn btn-primary">New Request</a>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>You haven't made any blood requests yet.
+                                    <div class="mt-2">
+                                        <a href="{% url 'create_request' %}" class="btn btn-primary btn-sm">Create New Request</a>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Blood Inventory</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="bloodInventoryChart" width="100%" height="250"></canvas>
+                    </div>
+                </div>
+                
+                <div class="card shadow">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fas fa-building me-2"></i>Organization Profile</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3">
+                            <strong>{{ requester_profile.organization_name }}</strong><br>
+                            <span class="badge bg-primary">{{ requester_profile.get_organization_type_display }}</span>
+                            {% if not requester_profile.verified %}
+                                <span class="badge bg-warning text-dark">Pending Verification</span>
+                            {% else %}
+                                <span class="badge bg-success">Verified</span>
+                            {% endif %}
+                        </p>
+                        
+                        <div class="mb-3">
+                            <strong><i class="fas fa-map-marker-alt text-primary me-2"></i>Address:</strong>
+                            <p class="mb-0">{{ requester_profile.address }}</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong><i class="fas fa-phone text-primary me-2"></i>Contact Phone:</strong>
+                            <p class="mb-0">{{ requester_profile.contact_phone }}</p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <strong><i class="fas fa-envelope text-primary me-2"></i>Email:</strong>
+                            <p class="mb-0">{{ user.email }}</p>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <a href="{% url 'edit_profile' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-edit me-2"></i>Edit Profile
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+    {% elif user.is_staff %}
+        <!-- Admin Dashboard -->
+        <div class="row mb-4">
+            <!-- Stats Cards -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-danger shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                    Blood Inventory
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_units }} Units</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-tint fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-success shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                    Donations Today
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ donations_today }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-warning shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    Pending Requests
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_requests.count }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-primary shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    Total Donors
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_donors }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-users fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Low Inventory Alert -->
+        {% if low_inventory_count > 0 %}
+            <div class="alert alert-warning mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                    <div>
+                        <h5 class="alert-heading mb-1">Low Blood Inventory Alert</h5>
+                        <p class="mb-0">{{ low_inventory_count }} blood types have less than 10 units available.</p>
+                    </div>
+                    <a href="{% url 'inventory_list' %}" class="btn btn-warning ms-auto">Manage Inventory</a>
+                </div>
+            </div>
+        {% endif %}
+        
+        <!-- Main Content Area -->
+        <div class="row">
+            <!-- Charts Column -->
+            <div class="col-lg-7">
+                <!-- Blood Inventory Chart -->
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 font-weight-bold">Blood Inventory Distribution</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="position: relative; height:300px;">
+                            <canvas id="bloodInventoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Donations Time Series Chart -->
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 font-weight-bold">Donations Over Time</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="position: relative; height:300px;">
+                            <canvas id="donationsTimeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Blood Groups Distribution -->
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="m-0 font-weight-bold">Blood Group Distribution in Donations</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="position: relative; height:300px;">
+                            <canvas id="bloodGroupsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Activity Column -->
+            <div class="col-lg-5">
+                <!-- Pending Requests -->
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold">Pending Blood Requests</h6>
+                            <a href="{% url 'request_list' %}" class="btn btn-sm btn-dark">View All</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if pending_requests %}
+                            <div class="list-group">
+                                {% for request in pending_requests %}
+                                    <a href="{% url 'request_detail' request.id %}" class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">
+                                                <span class="badge bg-danger me-1">{{ request.blood_group }}</span>
+                                                {{ request.units_needed }} units
+                                            </h6>
+                                            <small>
+                                                {% if request.priority == 'critical' %}
+                                                    <span class="badge bg-danger">Critical</span>
+                                                {% elif request.priority == 'high' %}
+                                                    <span class="badge bg-warning text-dark">High</span>
+                                                {% elif request.priority == 'medium' %}
+                                                    <span class="badge bg-primary">Medium</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Low</span>
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        <p class="mb-1">{{ request.requester.requester_profile.organization_name }}</p>
+                                        <small>
+                                            Needed by: 
+                                            {% if request.needed_by %}
+                                                {{ request.needed_by|date:"M d, Y" }}
+                                            {% else %}
+                                                <span class="text-danger">ASAP</span>
+                                            {% endif %}
+                                        </small>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                                <p>No pending blood requests at the moment.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Upcoming Appointments -->
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-info text-dark">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold">Upcoming Appointments</h6>
+                            <a href="{% url 'appointment_list' %}" class="btn btn-sm btn-dark">View All</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if upcoming_appointments %}
+                            <div class="list-group">
+                                {% for appointment in upcoming_appointments %}
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">
+                                                {{ appointment.donor.get_full_name|default:appointment.donor.username }}
+                                            </h6>
+                                            <small>
+                                                {% if appointment.status == 'pending' %}
+                                                    <span class="badge bg-secondary">Pending</span>
+                                                {% elif appointment.status == 'confirmed' %}
+                                                    <span class="badge bg-success">Confirmed</span>
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        <p class="mb-1">
+                                            <i class="fas fa-calendar-day me-1 text-primary"></i>
+                                            {{ appointment.appointment_date|date:"M d, Y" }} at 
+                                            {{ appointment.appointment_date|time:"g:i A" }}
+                                        </p>
+                                        <p class="mb-0">
+                                            <small class="text-muted">
+                                                <i class="fas fa-tint me-1"></i>
+                                                Blood Type: {{ appointment.donor.donor_profile.blood_group }}
+                                            </small>
+                                        </p>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-calendar-times text-muted fa-3x mb-3"></i>
+                                <p>No upcoming appointments scheduled.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="card shadow">
+                    <div class="card-header bg-dark text-white">
+                        <h6 class="m-0 font-weight-bold">Quick Actions</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <a href="{% url 'record_donation' %}" class="btn btn-danger btn-block w-100">
+                                    <i class="fas fa-tint me-2"></i>Record Donation
+                                </a>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <a href="{% url 'update_inventory' %}" class="btn btn-primary btn-block w-100">
+                                    <i class="fas fa-box me-2"></i>Update Inventory
+                                </a>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <a href="{% url 'request_list' %}" class="btn btn-warning btn-block w-100">
+                                    <i class="fas fa-clipboard-list me-2"></i>Manage Requests
+                                </a>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <a href="{% url 'export_inventory' %}" class="btn btn-success btn-block w-100">
+                                    <i class="fas fa-file-export me-2"></i>Export Data
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/charts.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if not search_mode %}
+            // Initialize Blood Inventory Chart
+            var ctx = document.getElementById('bloodInventoryChart').getContext('2d');
+            var bloodData = {{ blood_data_json|safe }};
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: bloodData.labels,
+                    datasets: [{
+                        data: bloodData.data,
+                        backgroundColor: [
+                            '#dc3545', // A+
+                            '#e35d6a', // A-
+                            '#0d6efd', // B+
+                            '#4d94ff', // B-
+                            '#6610f2', // AB+
+                            '#8540f5', // AB-
+                            '#20c997', // O+
+                            '#5dd6b4'  // O-
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 15,
+                                padding: 10
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    var label = context.label || '';
+                                    var value = context.raw || 0;
+                                    var total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                    var percentage = Math.round((value / total) * 100);
+                                    return label + ': ' + value + ' units (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            {% if user.is_staff %}
+                // Blood Groups Chart
+                var bloodGroupsCtx = document.getElementById('bloodGroupsChart').getContext('2d');
+                var bloodGroupData = {{ blood_group_data_json|safe }};
+                
+                new Chart(bloodGroupsCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: bloodGroupData.labels,
+                        datasets: [{
+                            label: 'Donations by Blood Group',
+                            data: bloodGroupData.data,
+                            backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                            borderColor: '#dc3545',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of Donations'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Blood Group'
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Donations Time Chart
+                var timeSeriesCtx = document.getElementById('donationsTimeChart').getContext('2d');
+                var timeSeriesData = {{ time_series_data_json|safe }};
+                
+                new Chart(timeSeriesCtx, {
+                    type: 'line',
+                    data: {
+                        labels: timeSeriesData.labels,
+                        datasets: [{
+                            label: 'Donations per Month',
+                            data: timeSeriesData.data,
+                            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                            borderColor: '#0d6efd',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of Donations'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Month'
+                                }
+                            }
+                        }
+                    }
+                });
+            {% endif %}
+        {% endif %}
+    });
+</script>
+{% endblock %}
